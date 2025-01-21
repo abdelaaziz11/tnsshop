@@ -1,0 +1,55 @@
+.Navbar{
+    background-color: rgba(212, 212, 212, 0.333);
+}
+.Navbar .Nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    display: flex;
+}
+.logo img {
+    width: 45px;
+    height: 45px;
+    margin: 5px 10px;
+}
+.logo p {
+    font-size: x-large;
+}
+.nav-items {
+    display: flex;
+    justify-content: space-between;
+    width: 60%;
+}
+.nav-items ul {
+    display: flex;
+    align-items: center;
+}
+.nav-items .center-items li {
+    list-style: none;
+    margin: 10px 20px;
+}
+.nav-items .center-items li a{
+    color: #000;
+    text-decoration: none;
+}
+.nav-items .right-items li {
+    list-style: none;
+    margin: 10px 10px;
+}
+.right-items img {
+    width: 25px;
+    margin-right: 5px;
+}
+.right-items .login-btn {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    padding: 5px 15px;
+    background-color: orange;
+    cursor: pointer;
+}
+.right-items .login-btn:active {
+    background-color: rgb(233, 165, 37);
+}
