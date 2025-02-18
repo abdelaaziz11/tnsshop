@@ -11,7 +11,13 @@ const { type } = require("os");
 
 
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+    origin: ["http://localhost:5173", "http://localhost:3000"], // Add your frontend URL here
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // Database conection with mongoDB 
 mongoose.connect("mongodb+srv://abdelaaziz:019020@cluster0.selrp.mongodb.net/tns-shop");
@@ -78,15 +84,13 @@ const Product = mongoose.model("Product", {
 })
 
 app.post('/addproduct', async (req,res)=> {
-    let Product = await Product.find({})
+    let productList = await Product.find({});
     let id;
-    if (product.length>0){
-        let last_product_array = product.slice(-1)
-        let last_product = last_product_array[0]
-        id = last_product.id+1
-    }
-    else{
-        id=1
+    if (productList.length > 0) {
+        let last_product = productList[productList.length - 1]; // Fix this
+        id = last_product.id + 1;
+    } else {
+        id = 1;
     }
     const product = new Product({
         id:id,
