@@ -295,17 +295,10 @@ app.post('/removefromcart',fetchUser,async(req,res)=>{
 })
 
 // Creating endpoint to get cart
-app.get("/getcart", fetchUser, async (req, res) => {
-    try {
-        let user = await Users.findOne({ _id: req.user.id });
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        res.json(user.cartData);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Server error" });
-    }
+app.post("/getcart", fetchUser, async (req, res) => {
+    console.log("GetCart")
+    let userData = await Users.findOne({_id:req.user.id})
+    res.json(userData.cartData)
 });
 
 
