@@ -7,6 +7,12 @@ const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
 const { type } = require("os");
+
+
+require("dotenv").config(); // Load .env variables
+const SECRET_KEY = process.env.JWT_SECRET || "secret_ecom";
+console.log("JWT Secret: ", process.env.JWT_SECRET)
+
 //const ProductModel = require('./models/Product'); 
 
 
@@ -20,7 +26,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Database conection with mongoDB 
-mongoose.connect("mongodb+srv://abdelaaziz:019020@cluster0.selrp.mongodb.net/tns-shop");
+const MONGO_URI = process.env.MONGO_URI;
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+console.log("MongoDB URI: ", process.env.MONGO_URI); 
 // API creation
 
 app.get("/",(req,res)=>{
@@ -80,7 +88,6 @@ const Product = mongoose.model("Product", {
         type:Boolean,
         default:true
     },
-
 })
 
 app.post('/addproduct', async (req,res)=> {
@@ -122,7 +129,6 @@ app.post('/removeproduct', async (req,res)=> {
 //Creating api for getting all products
 app.get('/allproducts', async (req,res)=> {
     let products = await Product.find({})
-    console.log("All products fetched")
     res.send(products)
 })
 
@@ -139,13 +145,14 @@ const Users = mongoose.model('Users', {
     password:{
         type:String,
     },
-    cartData:{
-        type:Object,
+    cartData: {
+        type: Object,
+        default: {}, // 🟢 Ensure cartData is initialized as an empty object
     },
-    date:{
-        type:Date,
-        default:Date.now,
-    }
+    date: {
+        type: Date,
+        default: Date.now,
+    },
 })
 
 // Creating Endpoint for registring 
@@ -173,7 +180,9 @@ app.post('/signup', async (req, res)=>{
         }
     }
 
-    const token = jwt.sign(data, 'secret_ecom');
+    const token = jwt.sign({ user: { id: user._id } }, SECRET_KEY, { expiresIn: "1h" });
+
+    //const token = jwt.sign(data, SECRET_KEY);
     res.json({success:true, token})
 })
 
@@ -188,7 +197,9 @@ app.post('/login', async (req, res)=> {
                     id:user.id
                 }
             }
-            const token = jwt.sign(data,'secret_ecom');
+            const token = jwt.sign({ user: { id: user._id } }, SECRET_KEY, { expiresIn: "1h" });
+
+            //const token = jwt.sign(data,SECRET_KEY);
             res.json({success:true,token})
         }
         else {
@@ -217,30 +228,61 @@ app.get('/popularinwomen', async (req,res)=>{
 })
 
 //Creating middelware to fetch user
-const fetchUser = async (req,res)=>{
-    const token = req.header('auth-token')
-    if(!token){
-        res.status(401).send({errors:"Please authenticate using valid token"})
+const fetchUser = async (req, res, next) => {
+    const token = req.header('auth-token');
+    
+    if (!token) {
+        return res.status(401).send({ errors: "Please authenticate using a valid token" });
     }
-    else {
-        try{
-            const data = jwt.verify(token,'secret_ecom')
-            req.user = data.user
-            next();
-        } catch (error) {
-            res.status(401).send({errors:"Please anthenticate using valid token"})
-        }
+    else{
+        try {
+        const data = jwt.verify(token, SECRET_KEY);
+        req.user = data.user;
+        next();
+    } catch (error) {
+        res.status(401).send({ errors: "Please authenticate using a valid token" });
     }
-}
+    }
+    
+};
+
+// Create authenticateToken
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers["authorization"];
+    console.log("Received Header:", authHeader); // Debugging line
+  
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ errors: "Please authenticate using a valid token" });
+    }
+  
+    const token = authHeader.split(" ")[1]; // Extract token
+    console.log("Extracted Token:", token);
+  
+    if (!token) {
+      return res.status(403).json({ errors: "Token is missing" });
+    }
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) return res.status(403).json({ errors: "Invalid token" });
+  
+      req.user = decoded.user; // Attach user to request
+      next();
+    });
+  };
+
+
+
 
 // Creating endpoint for adding products in cartdata
-app.post('/addtocart',fetchUser, async(req,res)=>{
-    console.log(req.body,req.user)
+app.post("/addtocart",fetchUser,async (req, res) => {
+    console.log(req.body,req.user);
+
     let userData = await Users.findOne({_id:req.user.id})
-    userData.cartData[req.body.itemId] += 1;
+    userData.cartData[req.body.itemId] +=1;
     await Users.findOneAndUpdate({_id:req.user.id},{cartData:userData.cartData})
     res.send("Added")
-})
+});
+
 
 // Creating endpoint to remove product from cartdata
 app.post('/removefromcart',fetchUser,async(req,res)=>{
@@ -253,11 +295,20 @@ app.post('/removefromcart',fetchUser,async(req,res)=>{
 })
 
 // Creating endpoint to get cart
-app.post('/getcart',fetchUser,async(req,res)=>{
-    console.log("GetCart")
-    let userData = await Users.findOne({_id:req.user.id})
-    res.json(userData.cartData)
-})
+app.get("/getcart", fetchUser, async (req, res) => {
+    try {
+        let user = await Users.findOne({ _id: req.user.id });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(user.cartData);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+
 
 app.listen(port,(error)=>{
     if (!error) {
@@ -267,4 +318,5 @@ app.listen(port,(error)=>{
         console.log("Error :"+error)
     }
 })
+
 
