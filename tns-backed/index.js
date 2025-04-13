@@ -18,7 +18,7 @@ console.log("JWT Secret: ", process.env.JWT_SECRET)
 
 app.use(express.json());
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:3000"], // Add your frontend URL here
+    origin: ["http://localhost:5173", "http://localhost:3000", "https://your-vercel-frontend.vercel.app"], // Add your frontend URL here
     methods: "GET,POST,PUT,DELETE",
     credentials: true
 };
