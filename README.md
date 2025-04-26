@@ -1,7 +1,3 @@
-Of course! Here's a **starter README.md** for your **tnsshop** project:
-
----
-
 # 🛒 tnsshop
 
 **tnsshop** is a full-stack e-commerce platform where users can browse products, add them to their cart, and complete purchases.  
